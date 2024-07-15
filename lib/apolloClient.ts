@@ -1,3 +1,5 @@
+// pages/index.tsx
+import { GetStaticProps } from 'next';
 import { gql } from '@apollo/client';
 import client from '../lib/apolloClient';
 
@@ -12,15 +14,11 @@ const GET_POSTS = gql`
   }
 `;
 
-export default async function Home() {
-  const { data } = await client.query({
-    query: GET_POSTS,
-  });
-
+const Home = ({ posts }: { posts: any[] }) => {
   return (
     <div>
       <h1>Blog Posts</h1>
-      {data.posts.nodes.map((post: any, index: number) => (
+      {posts.map((post, index) => (
         <div key={index}>
           <h2>{post.title}</h2>
           <div dangerouslySetInnerHTML={{ __html: post.content }} />
@@ -28,4 +26,19 @@ export default async function Home() {
       ))}
     </div>
   );
-}
+};
+
+export const getStaticProps: GetStaticProps = async () => {
+  const { data } = await client.query({
+    query: GET_POSTS,
+  });
+
+  return {
+    props: {
+      posts: data.posts.nodes,
+    },
+    revalidate: 10, // ISRの設定
+  };
+};
+
+export default Home;
